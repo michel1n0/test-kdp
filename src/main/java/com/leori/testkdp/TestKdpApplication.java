@@ -5,6 +5,8 @@ import com.google.gson.JsonParser;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.http.*;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -29,8 +31,8 @@ public class TestKdpApplication {
 
     public static final String OCR_EXT_TOKEN = "https://cognito-idp.us-east-1.amazonaws.com/";
 
-    public static final String OCR_EXT_CREATE = "https://k334tpzhmc.execute-api.us-east-1.amazonaws.com/prod/uploades";
-
+    //    public static final String OCR_EXT_CREATE = "https://k334tpzhmc.execute-api.us-east-1.amazonaws.com/prod/uploades";
+    public static final String OCR_EXT_CREATE = "https://e6n1cxcdzc.execute-api.us-east-1.amazonaws.com/dev/doc-upload";
     public static void main(String[] args) {
         SpringApplication.run(TestKdpApplication.class, args);
         System.out.println("test kdp");
@@ -109,14 +111,14 @@ public class TestKdpApplication {
             String jobType = "balances";
 
             HttpHeaders httpHeaders = new HttpHeaders();
-            httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            httpHeaders.add("headfilename", filename);
-            httpHeaders.add("headjobtype", jobType);
+            httpHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
+//            httpHeaders.add("headfilename", filename);
+//            httpHeaders.add("headjobtype", jobType);
             httpHeaders.add("authorization", idToken);
-            httpHeaders.add("validate", "true");
+//            httpHeaders.add("validate", "true");
 
 //            File file = new File("/Volumes/MICROSD/source AOCR/1604342844940.pdf");
-            byte[] fileContent = Files.readAllBytes(Paths.get("C:/workspaces/AOCR/resource/1604342844940.pdf"));
+            byte[] fileContent = Files.readAllBytes(Paths.get("/Volumes/MICROSD/source AOCR/1604342844940.pdf"));
 //            FileSystemResource fileSystemResource = new FileSystemResource(file);
 
 //            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -128,10 +130,21 @@ public class TestKdpApplication {
 //            });
 
 //            HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, httpHeaders);
-            HttpEntity<byte[]> request = new HttpEntity<>(fileContent, httpHeaders);
+//            HttpEntity<byte[]> request = new HttpEntity<>(fileContent, httpHeaders);
+
+
+
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            HttpHeaders pdfHeaders = new HttpHeaders();
+            pdfHeaders.setContentDispositionFormData("incoming_file", "archivo.pdf");
+            pdfHeaders.setContentType(MediaType.APPLICATION_PDF);
+
+            body.add("incoming_file", new HttpEntity<byte[]>(fileContent, pdfHeaders));
+
+            HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<MultiValueMap<String, Object>>(body, httpHeaders);
 
             LOGGER.info("antes del llamado KDP ::::::::::::::::: ");
-            ResponseEntity<String> res = restTemplate.postForEntity(OCR_EXT_CREATE, request, String.class);
+            ResponseEntity<String> res = restTemplate.postForEntity(OCR_EXT_CREATE, requestEntity, String.class);
             LOGGER.info("despues del llamado KDP ::::::::::::::::: ");
             String response = validateStatus(res);
             if(response == null) {
@@ -168,3 +181,4 @@ public class TestKdpApplication {
     }
 
 }
+
