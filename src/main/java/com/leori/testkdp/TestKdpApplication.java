@@ -13,6 +13,8 @@ import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.sun.xml.internal.ws.spi.db.BindingContextFactory.LOGGER;
 
@@ -41,8 +43,12 @@ public class TestKdpApplication {
 
         System.out.println("test kdp ::::::::::::::::" + idToken);
 
-        uploadFile(idToken);
+//        uploadFile(idToken);
+
+        checkWithExternalOCR(idToken);
+//        test();
     }
+
 
     private static String getIdToken() {
         System.out.println("getIdToken - Start");
@@ -118,7 +124,7 @@ public class TestKdpApplication {
 //            httpHeaders.add("validate", "true");
 
 //            File file = new File("/Volumes/MICROSD/source AOCR/1604342844940.pdf");
-            byte[] fileContent = Files.readAllBytes(Paths.get("/Volumes/MICROSD/source AOCR/1604342844940.pdf"));
+            byte[] fileContent = Files.readAllBytes(Paths.get("C:/workspaces/AOCR/resource/1604342844940.pdf"));
 //            FileSystemResource fileSystemResource = new FileSystemResource(file);
 
 //            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -178,6 +184,69 @@ public class TestKdpApplication {
             return body;
         }
         return null;
+    }
+
+    private static void checkWithExternalOCR(String idToken) {
+        LOGGER.info("checkWithExternalOCR - Init");
+
+        HttpHeaders headers = new HttpHeaders();
+//        String idToken = getIdToken();
+
+        JsonObject responseBody = null;
+        if (idToken != null) {
+            headers.add("Authorization", idToken);
+
+            HttpEntity<String> request = new HttpEntity<>(headers);
+            Map<String, String> queryParams = new HashMap<>();
+            queryParams.put("document_id", "71d1af5e-7f7e-40f4-9970-3c1123d970dd");
+
+            ResponseEntity<String> response = null;
+            try {
+                RestTemplate restTemplate = new RestTemplate();
+
+                response = restTemplate.exchange(
+                        "https://e6n1cxcdzc.execute-api.us-east-1.amazonaws.com/dev/get-status/{document_id}",
+                        HttpMethod.GET,
+                        request,
+                        String.class,
+                        queryParams
+                );
+
+                System.out.println("Response code: " + response.getStatusCode());
+                System.out.println("Response body: " + response.getBody());
+
+            } catch (RestClientException exception) {
+                LOGGER.info("RestClientException::::::::::::::::::::::::: "+ exception.getMessage());
+            }
+        }
+        LOGGER.info("checkWithExternalOCR - End");
+
+//        return responseBody == null ? null : extractDataPointsExternalOCR(responseBody, processDTO);
+    }
+
+    private static void test() {
+        String url = "https://e6n1cxcdzc.execute-api.us-east-1.amazonaws.com/dev/get-status/71d1af5e-7f7e-40f4-9970-3c1123d970dd";
+
+        // Set up the headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "eyJraWQiOiJkeU82QVhGemZuanVcL25tS1wvemJETVRjOWZscW0yRklqYURRZzlveXNHa3M9IiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiI0ZDNhNWMxNi1mZWU1LTRhMDAtOTA4OC1mMmNkZWM5MWYyMzUiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiY3VzdG9tOnVzZXJfdHlwZV8yIjoiZDM5M2Y2NTgtOTA1NS00MTViLWJlYzYtMWEzYTBkZDlkM2ZhIiwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tXC91cy1lYXN0LTFfc3V2S3ZZcnZCIiwicGhvbmVfbnVtYmVyX3ZlcmlmaWVkIjp0cnVlLCJjdXN0b206YWNjb3VudElkIjoiYjE2YjUyYTgtN2FkMi00MTRhLWI2OTctMzE0YjcxNTMwOGIxIiwiY29nbml0bzp1c2VybmFtZSI6IjRkM2E1YzE2LWZlZTUtNGEwMC05MDg4LWYyY2RlYzkxZjIzNSIsIm9yaWdpbl9qdGkiOiJlNzhmOWViOS05MzNhLTQxMzItYmEyOC01YjYxMDgwMGYxYzQiLCJhdWQiOiI3aXBuaG9kNHM5aWlicjZkOGljbDBvM2JhNSIsImV2ZW50X2lkIjoiNTU1ZTU4MDYtY2FhNS00ZmJlLTliZTYtNjEyMjIxMmY0ZTA3IiwidG9rZW5fdXNlIjoiaWQiLCJhdXRoX3RpbWUiOjE3MDM3ODM5NjQsInBob25lX251bWJlciI6Iis1NDAyMzU1Njk0ODUxIiwiZXhwIjoxNzA0Mjg4NDUyLCJpYXQiOjE3MDQyMDIwNTIsImp0aSI6ImM1ZDIwMzYxLWUzNDctNDY4Ni05YWI0LWIxY2RiNTMyYWM1OCIsImVtYWlsIjoibWFyaW5hLmd1ZW5jaHVhbEBuZW9yaXMuY29tIn0.DtntoY9gbVIvaQdSPybjKIQyX6vhZA7wX1NcSt3edFXkFP1U6kTt7rT1CJxqL6hppoIP-tr4dHO6-DR3SaWM93cB9NOgNfYE_Rtvfdzl2PE0QdIH01U2a3E5HUBJGAwditIINbJgKQ2IHRFS5Npy4NfML-6YdIEdjGVej-4IsKCFf8IDS2wfLsudPAfqZXgXUqhyFsz-WMhvhPcBQkrQQ9bq-6YsUtet2nROfy8bLuJQXO9z7mBo9FaJzYevA-NoreY0yAIdUP80HKFcZ8UDyubX4Ld2SN-FDCS3gQ08G3inQCLzwS3t2vAUJeYY7oGrDMbS-SusoAm7-pXGY1cd2g");
+
+        // Create an HttpEntity with headers
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        // Create a RestTemplate instance
+        RestTemplate restTemplate = new RestTemplate();
+
+        // Make the HTTP GET request
+        ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                String.class
+        );
+
+        // Print the response body
+        System.out.println(response.getBody());
     }
 
 }
